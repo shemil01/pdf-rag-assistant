@@ -33,7 +33,7 @@ export async function extractPdfText(buffer: Uint8Array): Promise<ExtractionResu
     
     // Join items with a space, then normalize whitespace
     let pageText = textContent.items
-      .map((item: { str?: string }) => item.str || "")
+      .map((item: any) => item.str || "")
       .join(" ");
 
     // Normalize whitespace (replace multiple spaces/newlines with a single space)

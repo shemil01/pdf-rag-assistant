@@ -1,14 +1,17 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import { Sidebar } from "@/components/documents/Sidebar";
-import { EmptyChat } from "@/components/chat/EmptyChat";
-import { ChatComposer } from "@/components/chat/ChatComposer";
+import { ChatArea } from "@/components/chat/ChatArea";
 
 export default function Page() {
+  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
+
   return (
     <div className="flex w-full h-full">
       {/* Sidebar - Desktop */}
       <div className="hidden md:block">
-        <Sidebar />
+        <Sidebar activeDocumentId={activeDocumentId} onSelectDocument={setActiveDocumentId} />
       </div>
 
       {/* Main Content Area */}
@@ -23,15 +26,7 @@ export default function Page() {
           </button>
         </header>
 
-        {/* Chat Area (Empty State for Day 1) */}
-        <div className="flex-1 overflow-y-auto">
-          <EmptyChat />
-        </div>
-
-        {/* Composer Area */}
-        <div className="mt-auto">
-          <ChatComposer />
-        </div>
+        <ChatArea key={activeDocumentId || "empty"} activeDocumentId={activeDocumentId} />
       </main>
     </div>
   );

@@ -5,8 +5,13 @@ import { FileText, Plus, Search, Trash2, Loader2, AlertCircle, CheckCircle } fro
 
 type UploadState = "IDLE" | "UPLOADING" | "SUCCESS" | "ERROR";
 
-export function Sidebar() {
-  const [documents, setDocuments] = useState<Array<Record<string, unknown>>>([]);
+interface SidebarProps {
+  activeDocumentId: string | null;
+  onSelectDocument: (id: string) => void;
+}
+
+export function Sidebar({ activeDocumentId, onSelectDocument }: SidebarProps) {
+  const [documents, setDocuments] = useState<any[]>([]);
   const [uploadState, setUploadState] = useState<UploadState>("IDLE");
   const [errorMessage, setErrorMessage] = useState("");
   const [uploadProgress, setUploadProgress] = useState("");
@@ -40,7 +45,9 @@ export function Sidebar() {
       }
 
       setUploadState("SUCCESS");
-      setDocuments(prev => [{ ...data, id: data.id || crypto.randomUUID() }, ...prev]);
+      const newDocId = data.id || crypto.randomUUID();
+      setDocuments(prev => [{ ...data, id: newDocId }, ...prev]);
+      onSelectDocument(newDocId);
       
       // Revert to idle after a few seconds
       setTimeout(() => setUploadState("IDLE"), 5000);
@@ -130,8 +137,11 @@ export function Sidebar() {
             )}
             {documents.map((doc) => (
               <div 
-                key={doc.id}
-                className="group flex flex-col p-2 rounded-md hover:bg-gray-50 cursor-pointer text-sm border border-transparent hover:border-gray-200"
+                key={doc.id as string}
+                onClick={() => onSelectDocument(doc.id as string)}
+                className={`group flex flex-col p-2 rounded-md hover:bg-gray-100 cursor-pointer text-sm border transition-colors ${
+                  activeDocumentId === doc.id ? 'bg-blue-50 border-blue-200' : 'border-transparent hover:border-gray-200'
+                }`}
               >
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2 truncate">
