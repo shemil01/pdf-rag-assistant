@@ -30,7 +30,7 @@ model DocumentChunk {
   content    String
   pageNumber Int
   chunkIndex Int
-  embedding  Unsupported("vector(768)")?
+  embedding  Unsupported("vector(3072)")?
   createdAt  DateTime @default(now())
 
   @@index([documentId])

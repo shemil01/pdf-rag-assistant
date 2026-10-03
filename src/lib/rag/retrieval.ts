@@ -56,6 +56,7 @@ export async function retrieveRelevantChunks(
   // We use Prisma's $queryRaw with parameterized variables to strictly prevent SQL injection.
   // We explicitly cast the embedding to ::vector to satisfy PostgreSQL's pgvector extension.
   // The ORDER BY ASC ensures the smallest distance (most similar) ranks first.
+  const queryEmbeddingStr = `[${queryEmbedding.join(',')}]`;
   const results = await prisma.$queryRaw<RetrievedChunk[]>`
     SELECT 
       id, 
@@ -63,10 +64,10 @@ export async function retrieveRelevantChunks(
       content, 
       "pageNumber", 
       "chunkIndex",
-      (embedding <=> ${queryEmbedding}::vector) AS distance
+      (embedding <=> ${queryEmbeddingStr}::vector) AS distance
     FROM "DocumentChunk"
     WHERE "documentId" = ${documentId}
-    ORDER BY embedding <=> ${queryEmbedding}::vector ASC
+    ORDER BY embedding <=> ${queryEmbeddingStr}::vector ASC
     LIMIT ${topK};
   `;
 

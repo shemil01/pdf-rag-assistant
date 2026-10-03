@@ -1,8 +1,8 @@
 import { embedMany } from 'ai';
 import { google } from '@ai-sdk/google';
 
-export const EMBEDDING_MODEL = 'text-embedding-004';
-export const EMBEDDING_DIMENSION = 768;
+export const EMBEDDING_MODEL = 'gemini-embedding-001';
+export const EMBEDDING_DIMENSION = 3072;
 
 /**
  * Batches text inputs and generates embeddings using Gemini text-embedding-004.
@@ -18,7 +18,7 @@ export async function generateEmbeddings(texts: string[], batchSize: number = 10
     
     // We use the @ai-sdk/google provider directly
     const { embeddings: batchEmbeddings } = await embedMany({
-      model: google.textEmbeddingModel(EMBEDDING_MODEL),
+      model: google.textEmbeddingModel(EMBEDDING_MODEL, { outputDimensionality: EMBEDDING_DIMENSION }),
       values: batch,
     });
     

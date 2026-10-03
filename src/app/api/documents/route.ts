@@ -88,6 +88,7 @@ export async function POST(request: Request) {
     await prisma.$transaction(
       chunks.map((chunk, index) => {
         const embedding = embeddings[index];
+        const embeddingStr = `[${embedding.join(',')}]`;
         // Using raw SQL is necessary for pgvector casting
         return prisma.$executeRaw`
           INSERT INTO "DocumentChunk" ("id", "documentId", "content", "pageNumber", "chunkIndex", "embedding")
@@ -97,7 +98,7 @@ export async function POST(request: Request) {
             ${chunk.content}, 
             ${chunk.pageNumber}, 
             ${chunk.chunkIndex}, 
-            ${embedding}::vector
+            ${embeddingStr}::vector
           )
         `;
       })
@@ -151,7 +152,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(
-      { error: { code: "INTERNAL_ERROR", message: "An unexpected error occurred during document ingestion." } },
+      { error: { code: "INTERNAL_ERROR", message: `Ingestion Error: ${err.message}` } },
       { status: 500 }
     );
   }
