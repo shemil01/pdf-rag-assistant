@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useChat } from "@ai-sdk/react";
 import { TextStreamChatTransport, UIMessage } from "ai";
-import { Send, FileText, Bot, User, Trash2, MoreHorizontal, Copy, ThumbsUp, ThumbsDown, Sparkles, Paperclip, FileImage, File } from "lucide-react";
+import { Send, FileText, Bot, User, Trash2, MoreHorizontal, Copy, ThumbsUp, ThumbsDown, Sparkles, Paperclip, FileImage, File, PlusIcon, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 const extractText = (m: UIMessage): string => {
+  if (m.content) return m.content;
   if (!m.parts) return "";
   return m.parts.map((p: any) => p.type === 'text' ? p.text : '').join('');
 };
@@ -13,11 +14,53 @@ interface ChatAreaProps {
   activeDocumentId: string | null;
   activeDocument?: any;
   setDocuments?: React.Dispatch<React.SetStateAction<any[]>>;
+  onSelectDocument?: (id: string) => void;
 }
 
-export function ChatArea({ activeDocumentId, activeDocument, setDocuments }: ChatAreaProps) {
+export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSelectDocument }: ChatAreaProps) {
   const [input, setInput] = useState("");
   const [citationsMap, setCitationsMap] = useState<Record<string, number[]>>({});
+  
+  const [uploadState, setUploadState] = useState<"IDLE" | "UPLOADING" | "SUCCESS" | "ERROR">("IDLE");
+  const [errorMessage, setErrorMessage] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (fileInputRef.current) fileInputRef.current.value = "";
+
+    setUploadState("UPLOADING");
+    setErrorMessage("");
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch("/api/documents", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error?.message || "Failed to process PDF.");
+      }
+
+      setUploadState("SUCCESS");
+      const newDocId = data.id || crypto.randomUUID();
+      if (setDocuments) setDocuments(prev => [{ ...data, id: newDocId }, ...prev]);
+      if (onSelectDocument) onSelectDocument(newDocId);
+      
+      setTimeout(() => setUploadState("IDLE"), 3000);
+    } catch (error: unknown) {
+      const err = error as Error;
+      setUploadState("ERROR");
+      setErrorMessage(err.message);
+    }
+  };
   
   const transport = useMemo(() => {
     if (!activeDocumentId) return undefined;
@@ -74,14 +117,43 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments }: Cha
 
   if (!activeDocumentId || !activeDocument) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gray-50 flex-col gap-4">
-        <div className="w-16 h-16 bg-white shadow-sm rounded-2xl flex items-center justify-center text-indigo-400">
+      <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-zinc-950 flex-col gap-4">
+        <div className="w-16 h-16 bg-white dark:bg-zinc-900 shadow-sm rounded-2xl flex items-center justify-center text-indigo-400">
           <Sparkles className="w-8 h-8" />
         </div>
-        <div className="text-center">
-          <h2 className="text-xl font-bold text-gray-900 mb-1">DocuMind AI</h2>
-          <p className="text-sm text-gray-500">Select or upload a document to begin</p>
+        <div className="text-center mb-4">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">DocuMind AI</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Select or upload a document to begin</p>
         </div>
+
+        <input 
+          type="file" 
+          accept="application/pdf" 
+          className="hidden" 
+          ref={fileInputRef} 
+          onChange={handleFileChange}
+          disabled={uploadState === "UPLOADING"}
+        />
+        
+        <button 
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploadState === "UPLOADING"}
+          className="flex items-center gap-2 justify-center bg-indigo-500 text-white rounded-xl py-3 px-6 hover:bg-indigo-600 transition-colors font-medium text-sm disabled:bg-indigo-300 disabled:cursor-not-allowed shadow-md"
+        >
+          {uploadState === "UPLOADING" ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <PlusIcon className="w-4 h-4" />
+          )}
+          Upload PDF Document
+        </button>
+
+        {uploadState === "ERROR" && (
+          <div className="mt-3 p-3 bg-red-50 text-red-600 text-xs rounded-lg border border-red-100">
+            <span className="font-semibold">Error:</span> {errorMessage}
+            <button onClick={() => setUploadState("IDLE")} className="ml-2 underline">Dismiss</button>
+          </div>
+        )}
       </div>
     );
   }
@@ -89,15 +161,15 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments }: Cha
   const isReady = activeDocument.status === "READY";
 
   return (
-    <div className="flex flex-col h-full bg-white relative">
+    <div className="flex flex-col h-full bg-white dark:bg-zinc-950 relative">
       {/* Header */}
-      <div className="h-20 border-b border-gray-100 px-6 py-4 flex items-center justify-between shrink-0">
+      <div className="h-20 border-b border-gray-100 dark:border-gray-800 px-6 py-4 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-red-50 text-red-500 rounded-xl flex items-center justify-center shrink-0">
+          <div className="w-12 h-12 bg-red-50 dark:bg-red-500/10 text-red-500 rounded-xl flex items-center justify-center shrink-0">
             <FileText className="w-6 h-6" />
           </div>
           <div className="flex flex-col justify-center">
-            <h2 className="text-lg font-bold text-gray-900 leading-tight truncate max-w-[300px] lg:max-w-[400px]">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight truncate max-w-[300px] lg:max-w-[400px]">
               {activeDocument.filename || 'Document.pdf'}
             </h2>
             <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
@@ -132,7 +204,7 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments }: Cha
             <div className="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
               <Sparkles className="w-6 h-6" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Ask anything about your document</h2>
+            <h2 className="text-xl font-semibold text-gray-600 mb-2">Ask anything about your document</h2>
             <p className="text-sm text-gray-500 text-center mb-8 max-w-md leading-relaxed">
               I can help you understand, summarize, and find specific information in your PDF. All answers include source citations.
             </p>
@@ -168,11 +240,11 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments }: Cha
                 {isAssistant && (
                   <div className="flex items-center justify-between w-full mb-1">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
-                        <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                      <div className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-500/10 flex items-center justify-center shrink-0">
+                        <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                       </div>
-                      <span className="font-semibold text-sm text-gray-900">AI Assistant</span>
-                      <span className="text-xs text-gray-400 ml-2">Just now</span>
+                      <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">AI Assistant</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">Just now</span>
                     </div>
                     
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity">
@@ -185,22 +257,22 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments }: Cha
                 
                 {!isAssistant && (
                   <div className="flex items-center justify-end w-full mb-1 gap-2">
-                    <span className="font-semibold text-sm text-gray-900">You</span>
-                    <span className="text-xs text-gray-400">Just now</span>
+                    <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">You</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">Just now</span>
                   </div>
                 )}
 
                 <div 
                   className={`text-sm group ${
                     !isAssistant 
-                      ? "bg-indigo-100/50 text-gray-900 px-5 py-3 rounded-2xl rounded-tr-sm max-w-[85%] md:max-w-[70%]" 
-                      : "text-gray-800 leading-relaxed pr-8"
+                      ? "bg-indigo-100/50 dark:bg-indigo-500/20 text-gray-900 dark:text-gray-100 px-5 py-3 rounded-2xl rounded-tr-sm max-w-[85%] md:max-w-[70%]" 
+                      : "text-gray-800 dark:text-gray-200 leading-relaxed pr-8"
                   }`}
                 >
                   {!isAssistant ? (
                     <div className="whitespace-pre-wrap">{contentText}</div>
                   ) : (
-                    <div className="prose prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-gray-50 prose-pre:border prose-pre:border-gray-100 prose-pre:text-gray-800 prose-headings:font-semibold prose-a:text-indigo-600">
+                    <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-gray-50 dark:prose-pre:bg-zinc-900 prose-pre:border prose-pre:border-gray-100 dark:prose-pre:border-zinc-800 prose-pre:text-gray-800 dark:prose-pre:text-gray-200 prose-headings:font-semibold prose-a:text-indigo-600 dark:prose-a:text-indigo-400">
                       <ReactMarkdown>{contentText}</ReactMarkdown>
                     </div>
                   )}
@@ -208,11 +280,11 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments }: Cha
 
                 {isAssistant && citationsMap[activeDocumentId] && citationsMap[activeDocumentId].length > 0 && index === messages.length - 1 && (
                   <div className="mt-4 flex items-center gap-3">
-                    <span className="text-xs font-semibold text-gray-800">Sources</span>
+                    <span className="text-xs font-semibold text-gray-800 dark:text-gray-300">Sources</span>
                     <div className="flex gap-2">
                       {citationsMap[activeDocumentId].map((page) => (
-                        <div key={page} className="flex items-center gap-1.5 px-2.5 py-1 bg-white border border-gray-200 rounded-md text-xs font-medium text-gray-600 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors">
-                          <File className="w-3 h-3 text-gray-400" />
+                        <div key={page} className="flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-md text-xs font-medium text-gray-600 dark:text-gray-300 shadow-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
+                          <File className="w-3 h-3 text-gray-400 dark:text-gray-500" />
                           Page {page}
                         </div>
                       ))}
@@ -224,16 +296,18 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments }: Cha
           })
         )}
         
-        {isLoading && messages[messages.length - 1]?.role === 'user' && (
+         {isLoading && messages[messages.length - 1]?.role === 'user' && (
            <div className="flex flex-col gap-2 max-w-3xl">
              <div className="flex items-center gap-2 mb-1">
-               <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
-                 <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+               <div className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-500/10 flex items-center justify-center shrink-0">
+                 <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 animate-pulse" />
                </div>
-               <span className="font-semibold text-sm text-gray-900">AI Assistant</span>
+               <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">AI Assistant</span>
              </div>
-             <div className="text-sm text-gray-800 leading-relaxed flex items-center h-6">
-                <span className="w-1.5 h-4 bg-indigo-500 animate-pulse inline-block rounded-sm"></span>
+             <div className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed flex items-center gap-1 h-6">
+                <span className="w-1.5 h-1.5 bg-indigo-400 dark:bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                <span className="w-1.5 h-1.5 bg-indigo-400 dark:bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                <span className="w-1.5 h-1.5 bg-indigo-400 dark:bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
              </div>
            </div>
         )}
@@ -248,13 +322,13 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments }: Cha
         <div ref={messagesEndRef} className="h-4" />
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white to-transparent pt-12">
-        <div className="max-w-4xl mx-auto relative flex flex-col border border-gray-200 rounded-xl shadow-sm bg-white overflow-hidden focus-within:ring-1 focus-within:ring-indigo-500 focus-within:border-indigo-500 transition-all">
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white dark:from-zinc-950 dark:via-zinc-950 to-transparent pt-12">
+        <div className="max-w-4xl mx-auto relative flex flex-col border-2 border-indigo-500 dark:border-indigo-500/80 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] bg-white dark:bg-zinc-900 overflow-hidden focus-within:ring-1 focus-within:ring-indigo-500 focus-within:border-indigo-600 transition-all">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask anything about this document..."
-            className="w-full px-4 pt-4 pb-12 bg-transparent focus:outline-none resize-none text-sm"
+            className="w-full px-4 pt-4 pb-12 bg-transparent focus:outline-none resize-none text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-600"
             rows={2}
             disabled={isLoading || !isReady}
             onKeyDown={(e) => {

@@ -2,7 +2,7 @@ import { generateText } from "ai";
 import { google } from "@ai-sdk/google";
 import { getRagSystemPrompt } from "./prompts";
 
-export const GENERATION_MODEL = "gemini-1.5-flash";
+export const GENERATION_MODEL = "gemini-3.5-flash";
 
 export interface GenerateAnswerParams {
   question: string;

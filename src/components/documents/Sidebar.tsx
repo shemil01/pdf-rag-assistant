@@ -65,41 +65,10 @@ export function Sidebar({ activeDocumentId, onSelectDocument, documents, setDocu
   };
 
   return (
-    <aside className="w-72 border-r border-gray-100 bg-white flex flex-col h-full shrink-0">
-      <div className="p-4">
-        <input 
-          type="file" 
-          accept="application/pdf" 
-          className="hidden" 
-          ref={fileInputRef} 
-          onChange={handleFileChange}
-          disabled={uploadState === "UPLOADING"}
-        />
-        
-        <button 
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploadState === "UPLOADING"}
-          className="w-full flex items-center gap-2 justify-center bg-indigo-500 text-white rounded-lg py-2.5 px-4 hover:bg-indigo-600 transition-colors font-medium text-sm disabled:bg-indigo-300 disabled:cursor-not-allowed shadow-sm"
-        >
-          {uploadState === "UPLOADING" ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Plus className="w-4 h-4" />
-          )}
-          Upload PDF
-        </button>
-
-        {uploadState === "ERROR" && (
-          <div className="mt-3 p-2 bg-red-50 text-red-600 text-xs rounded border border-red-100">
-            <span className="font-semibold">Error:</span> {errorMessage}
-            <button onClick={() => setUploadState("IDLE")} className="ml-2 underline">Dismiss</button>
-          </div>
-        )}
-      </div>
-      
-      <div className="flex items-center justify-between px-4 pb-2">
-        <h2 className="text-sm font-semibold text-gray-800">Documents</h2>
-        <span className="text-[10px] font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{documents.length}</span>
+    <aside className="w-72 border-r border-gray-100 dark:border-gray-800 bg-white dark:bg-zinc-950 flex flex-col h-full shrink-0">
+      <div className="flex items-center justify-between px-4 pt-6 pb-2">
+        <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Documents History</h2>
+        <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">{documents.length}</span>
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 space-y-1">
@@ -112,7 +81,7 @@ export function Sidebar({ activeDocumentId, onSelectDocument, documents, setDocu
               key={doc.id as string}
               onClick={() => onSelectDocument(doc.id as string)}
               className={`group relative flex items-start gap-3 p-2.5 rounded-lg cursor-pointer transition-colors ${
-                isActive ? 'bg-indigo-50' : 'hover:bg-gray-50'
+                isActive ? 'bg-indigo-50 dark:bg-indigo-500/10' : 'hover:bg-gray-50 dark:hover:bg-zinc-900/50'
               }`}
             >
               {isActive && (
@@ -125,7 +94,7 @@ export function Sidebar({ activeDocumentId, onSelectDocument, documents, setDocu
               
               <div className="flex-1 min-w-0 flex flex-col justify-center h-8">
                 <div className="flex items-center justify-between">
-                  <span className={`truncate text-sm font-medium ${isActive ? 'text-indigo-900' : 'text-gray-700'}`}>
+                  <span className={`truncate text-sm font-medium ${isActive ? 'text-indigo-900 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300'}`}>
                     {doc.filename || 'Document.pdf'}
                   </span>
                 </div>
@@ -155,13 +124,13 @@ export function Sidebar({ activeDocumentId, onSelectDocument, documents, setDocu
       
       {/* Footer Info Card */}
       <div className="p-4 mt-auto">
-        <div className="bg-gradient-to-br from-indigo-50/80 to-purple-50/80 rounded-xl p-4 overflow-hidden relative border border-indigo-100/50">
-          <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-indigo-100 rounded-full blur-xl opacity-60"></div>
-          <div className="w-8 h-8 bg-white rounded-lg shadow-sm flex items-center justify-center text-indigo-500 mb-3 relative z-10">
-            <Sparkles className="w-4 h-4" />
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 overflow-hidden relative border border-gray-100 dark:border-zinc-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none">
+          <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-indigo-50/80 dark:bg-indigo-900/20 rounded-full blur-2xl"></div>
+          <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-4 relative z-10">
+            <Sparkles className="w-5 h-5" />
           </div>
-          <h3 className="font-semibold text-sm text-gray-900 mb-1 relative z-10">PDF AI Assistant</h3>
-          <p className="text-xs text-gray-500 leading-relaxed relative z-10">
+          <h3 className="font-bold text-[15px] text-gray-900 dark:text-gray-100 mb-1.5 relative z-10">PDF AI Assistant</h3>
+          <p className="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed relative z-10 pr-2">
             Upload your documents and get instant, accurate answers with source citations.
           </p>
         </div>

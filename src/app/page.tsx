@@ -31,6 +31,7 @@ export default function Page() {
             activeDocumentId={activeDocumentId} 
             activeDocument={activeDoc}
             setDocuments={setDocuments}
+            onSelectDocument={setActiveDocumentId}
           />
         </main>
 
