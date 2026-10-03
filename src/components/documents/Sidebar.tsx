@@ -2,12 +2,11 @@
 
 import React, { useRef, useState } from "react";
 import { FileText, Plus, Search, Trash2, Loader2, AlertCircle, CheckCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 type UploadState = "IDLE" | "UPLOADING" | "SUCCESS" | "ERROR";
 
 export function Sidebar() {
-  const [documents, setDocuments] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<Array<Record<string, unknown>>>([]);
   const [uploadState, setUploadState] = useState<UploadState>("IDLE");
   const [errorMessage, setErrorMessage] = useState("");
   const [uploadProgress, setUploadProgress] = useState("");
@@ -45,9 +44,10 @@ export function Sidebar() {
       
       // Revert to idle after a few seconds
       setTimeout(() => setUploadState("IDLE"), 5000);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as Error;
       setUploadState("ERROR");
-      setErrorMessage(error.message);
+      setErrorMessage(err.message);
     }
   };
 

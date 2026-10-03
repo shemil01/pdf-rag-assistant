@@ -383,7 +383,7 @@ MAX_FILE_SIZE_MB=10
 | **1** | **Setup & UI** | [x] Initialize Next.js, Tailwind, Prisma. Create basic layout and upload UI components. |
 | **2** | **PDF Parsing** | [x] Implement `/api/documents` POST. Integrate `unpdf` to extract raw text page-by-page. |
 | **3** | **Database Layer** | [x] Setup PostgreSQL via provider (e.g. Supabase/Neon). Create Prisma schema. Write raw SQL migration for `pgvector`. |
-| **4** | **Ingestion Engine** | Implement text chunking. Call Gemini `text-embedding-004`. Save chunks to DB. |
+| **4** | **Ingestion Engine** | [x] Implement text chunking. Call Gemini `text-embedding-004`. Save chunks to DB. |
 | **5** | **Retrieval Engine** | Implement pgvector cosine similarity search (`<=>`). Test retrieval via API. |
 | **6** | **LLM Integration** | Setup Vercel AI SDK. Write RAG prompt. Wire up Gemini `gemini-1.5-flash` generation. |
 | **7** | **Streaming & UI** | Implement `/api/chat`. Wire Next.js frontend to stream text and display source citations. |

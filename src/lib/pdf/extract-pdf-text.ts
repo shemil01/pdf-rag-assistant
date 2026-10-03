@@ -1,4 +1,4 @@
-import { getDocumentProxy, extractText } from "unpdf";
+import { getDocumentProxy } from "unpdf";
 import { DOCUMENT_LIMITS } from "../validation/document";
 
 export interface ExtractedPage {
@@ -33,7 +33,7 @@ export async function extractPdfText(buffer: Uint8Array): Promise<ExtractionResu
     
     // Join items with a space, then normalize whitespace
     let pageText = textContent.items
-      .map((item: any) => item.str || "")
+      .map((item: { str?: string }) => item.str || "")
       .join(" ");
 
     // Normalize whitespace (replace multiple spaces/newlines with a single space)
