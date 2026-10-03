@@ -11,13 +11,18 @@ export async function POST(req: Request) {
   try {
     const { messages, documentId } = await req.json();
 
-    // 1. Validation
-    if (!documentId || typeof documentId !== "string") {
-      return NextResponse.json({ error: "Invalid or missing documentId" }, { status: 400 });
-    }
-
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: "Messages array is required and cannot be empty" }, { status: 400 });
+    }
+
+    // General chat if no documentId is provided
+    if (!documentId || typeof documentId !== "string") {
+      const result = streamText({
+        model: google(GENERATION_MODEL),
+        system: "You are a helpful AI knowledge assistant. Answer the user's questions.",
+        messages: messages as any,
+      });
+      return result.toTextStreamResponse();
     }
 
     const lastMessage = messages[messages.length - 1] as UIMessage;
