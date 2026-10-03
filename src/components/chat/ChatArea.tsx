@@ -97,7 +97,9 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
             const sources = JSON.parse(sourcesStr);
             // We can't easily know the message ID here, so we store it against the document ID or a dummy key
             // Actually, we can just store the latest sources for the active document.
-            setCitationsMap(prev => ({ ...prev, [activeDocumentId]: sources }));
+            if (activeDocumentId) {
+              setCitationsMap(prev => ({ ...prev, [activeDocumentId]: sources }));
+            }
           } catch (e) {
             console.error("Failed to parse sources header", e);
           }
@@ -294,11 +296,11 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
                   )}
                 </div>
 
-                {isAssistant && citationsMap[activeDocumentId] && citationsMap[activeDocumentId].length > 0 && index === messages.length - 1 && (
+                {isAssistant && activeDocumentId && citationsMap[activeDocumentId] && citationsMap[activeDocumentId].length > 0 && index === messages.length - 1 && (
                   <div className="mt-4 flex items-center gap-3">
                     <span className="text-xs font-semibold text-gray-800 dark:text-gray-300">Sources</span>
                     <div className="flex gap-2">
-                      {citationsMap[activeDocumentId].map((page) => (
+                      {activeDocumentId && citationsMap[activeDocumentId] && citationsMap[activeDocumentId].map((page) => (
                         <div key={page} className="flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-md text-xs font-medium text-gray-600 dark:text-gray-300 shadow-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
                           <File className="w-3 h-3 text-gray-400 dark:text-gray-500" />
                           Page {page}
@@ -381,7 +383,7 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
              <span className="text-[10px] text-gray-400 hidden sm:inline-block">Press Enter to send, Shift + Enter for a new line</span>
             <button
               onClick={handleSubmit}
-              disabled={!input.trim() || isLoading || uploadState === "UPLOADING"}
+              disabled={!input.trim() || isLoading}
               className="p-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-indigo-300 disabled:cursor-not-allowed flex items-center justify-center shadow-sm"
               aria-label="Send message"
             >
