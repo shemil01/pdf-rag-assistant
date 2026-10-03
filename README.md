@@ -97,7 +97,7 @@ Interacting with lengthy PDF documents (like manuals, research papers, or contra
   - *Embedding API (`text-embedding-004`):* Converts text into 768-dimensional mathematical vectors representing semantic meaning.
 - **Vercel AI SDK (`@ai-sdk/google`):** Standardizes streaming AI responses and tool calling in React/Next.js, abstracting raw API complexities.
 - **PostgreSQL with pgvector:** Relational database with an extension for storing vectors and performing blazing-fast similarity search (Cosine Distance).
-- **Prisma ORM:** Typesafe database client and migration tool. Raw SQL is used specifically for pgvector similarity searches since standard ORMs lack native support for advanced vector operations.
+- **Prisma ORM (v7):** Typesafe database client and migration tool. Includes `prisma.config.ts` for database connection management. Raw SQL is used specifically for pgvector similarity searches since standard ORMs lack native support for advanced vector operations.
 - **Zod:** Schema validation library used for validating API inputs and environment variables at runtime.
 - **unpdf:** Lightweight library for extracting text from PDFs in serverless environments without heavy native dependencies.
 - **Vitest:** Fast unit testing framework compatible with Vite/Next.js environments.
@@ -232,7 +232,9 @@ sequenceDiagram
 ## 9. Database Design
 
 We use Prisma for standard tables and raw SQL for vector operations.
-**Embedding Dimensions:** `text-embedding-004` uses 768 dimensions.
+**Embedding Dimensions:** `text-embedding-004` uses 768 dimensions (verified via Google Gemini API docs).
+
+Note: Changing the model or dimension in the future requires regenerating all vectors and modifying the vector column.
 
 ### Table: `Document`
 | Column | Type | Constraints | Description |
@@ -380,11 +382,11 @@ MAX_FILE_SIZE_MB=10
 |-----|-------|----------------------|
 | **1** | **Setup & UI** | [x] Initialize Next.js, Tailwind, Prisma. Create basic layout and upload UI components. |
 | **2** | **PDF Parsing** | [x] Implement `/api/documents` POST. Integrate `unpdf` to extract raw text page-by-page. |
-| **3** | **Database Layer** | [ ] Setup PostgreSQL via provider (e.g. Supabase/Neon). Create Prisma schema. Write raw SQL migration for `pgvector`. |
-| **4** | **Ingestion Engine** | Implement text chunking. Call Gemini `text-embedding-004`. Save chunks to DB. |
-| **5** | **Retrieval Engine** | Implement pgvector cosine similarity search (`<=>`). Test retrieval via API. |
-| **6** | **LLM Integration** | Setup Vercel AI SDK. Write RAG prompt. Wire up Gemini `gemini-1.5-flash` generation. |
-| **7** | **Streaming & UI** | Implement `/api/chat`. Wire Next.js frontend to stream text and display source citations. |
+| **3** | **Database Layer** | [x] Setup PostgreSQL via provider (e.g. Supabase/Neon). Create Prisma schema. Write raw SQL migration for `pgvector`. |
+| **4** | **Ingestion Engine** | [x] Implement text chunking. Call Gemini `text-embedding-004`. Save chunks to DB. |
+| **5** | **Retrieval Engine** | [x] Implement pgvector cosine similarity search (`<=>`). Test retrieval via API. |
+| **6** | **LLM Integration** | [x] Setup Vercel AI SDK. Write RAG prompt. Wire up Gemini `gemini-1.5-flash` generation. |
+| **7** | **Streaming & UI** | [x] Implement `/api/chat`. Wire Next.js frontend to stream text and display source citations. |
 | **8** | **Testing** | Write Vitest unit tests for chunking. Test edge cases (large PDFs, bad files). |
 | **9** | **Polish & Security** | Add Zod validation. Improve error handling/toast UI. Add document deletion. |
 | **10** | **Deployment** | Deploy to Vercel. Verify environment variables and database connections. Write final docs. |
@@ -395,7 +397,7 @@ MAX_FILE_SIZE_MB=10
 
 1. **Database Provisioning:** Provision a Postgres database with pgvector support (e.g., Supabase, Neon).
 2. **Environment Variables:** Configure Vercel with `GEMINI_API_KEY`, `DATABASE_URL`, and `DIRECT_URL`.
-3. **Build & Migrate:** Run `npx prisma generate` and `npx prisma migrate deploy` in the Vercel build step.
+3. **Build & Migrate:** Run `npx prisma generate` and `npx prisma migrate deploy` (if connected to real DB) in the Vercel build step.
 4. **Deploy:** Push code to GitHub linked to Vercel. Monitor build logs for errors.
 5. **Post-Deploy:** Test upload and chat flows on the production URL to ensure timeout limits aren't breached.
 

@@ -1,4 +1,4 @@
-import { getDocumentProxy, extractText } from "unpdf";
+import { getDocumentProxy } from "unpdf";
 import { DOCUMENT_LIMITS } from "../validation/document";
 
 export interface ExtractedPage {
