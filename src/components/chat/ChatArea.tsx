@@ -1,13 +1,35 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useChat } from "@ai-sdk/react";
 import { TextStreamChatTransport, UIMessage } from "ai";
-import { Send, FileText, Bot, User, Trash2, MoreHorizontal, Copy, ThumbsUp, ThumbsDown, Sparkles, Paperclip, FileImage, File, PlusIcon, Loader2 } from "lucide-react";
+import { Send, FileText, Bot, User, Trash2, MoreHorizontal, Copy, ThumbsUp, ThumbsDown, Sparkles, Paperclip, FileImage, File, PlusIcon, Loader2, AlertCircle } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 const extractText = (m: UIMessage): string => {
   if (m.content) return m.content;
   if (!m.parts) return "";
   return m.parts.map((p: any) => p.type === 'text' ? p.text : '').join('');
+};
+
+const getFriendlyErrorMessage = (errStr: string): string => {
+  if (!errStr) return "An unknown error occurred.";
+  
+  try {
+    const parsed = JSON.parse(errStr);
+    if (parsed.error) errStr = parsed.error;
+    else if (parsed.message) errStr = parsed.message;
+  } catch {
+    // Not JSON, continue with original string
+  }
+  
+  if (errStr.includes("Invalid or missing documentId")) {
+    return "Please select or upload a document before asking questions.";
+  }
+  
+  if (errStr.includes("Failed to fetch") || errStr.includes("NetworkError")) {
+    return "We couldn't connect to the server. Please check your internet connection.";
+  }
+  
+  return errStr;
 };
 
 interface ChatAreaProps {
@@ -115,56 +137,31 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
     }
   };
 
-  if (!activeDocumentId || !activeDocument) {
+  const isReady = activeDocument ? activeDocument.status === "READY" : true;
+
+  if (uploadState === "UPLOADING") {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-zinc-950 flex-col gap-4">
-        <div className="w-16 h-16 bg-white dark:bg-zinc-900 shadow-sm rounded-2xl flex items-center justify-center text-indigo-400">
-          <Sparkles className="w-8 h-8" />
-        </div>
-        <div className="text-center mb-4">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">DocuMind AI</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Select or upload a document to begin</p>
-        </div>
-
-        <input 
-          type="file" 
-          accept="application/pdf" 
-          className="hidden" 
-          ref={fileInputRef} 
-          onChange={handleFileChange}
-          disabled={uploadState === "UPLOADING"}
-        />
-        
-        <button 
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploadState === "UPLOADING"}
-          className="flex items-center gap-2 justify-center bg-indigo-500 text-white rounded-xl py-3 px-6 hover:bg-indigo-600 transition-colors font-medium text-sm disabled:bg-indigo-300 disabled:cursor-not-allowed shadow-md"
-        >
-          {uploadState === "UPLOADING" ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <PlusIcon className="w-4 h-4" />
-          )}
-          Upload PDF Document
-        </button>
-
-        {uploadState === "ERROR" && (
-          <div className="mt-3 p-3 bg-red-50 text-red-600 text-xs rounded-lg border border-red-100">
-            <span className="font-semibold">Error:</span> {errorMessage}
-            <button onClick={() => setUploadState("IDLE")} className="ml-2 underline">Dismiss</button>
-          </div>
-        )}
+      <div className="flex-1 flex flex-col items-center justify-center gap-4 bg-gray-50 dark:bg-zinc-950 h-full">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+        <p className="text-gray-500 dark:text-gray-400">Uploading Document...</p>
       </div>
     );
   }
 
-  const isReady = activeDocument.status === "READY";
-
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-zinc-950 relative">
+    <div className="flex flex-col h-full bg-white dark:bg-zinc-950 relative w-full overflow-hidden font-sans">
+      <input 
+        type="file" 
+        accept="application/pdf" 
+        className="hidden" 
+        ref={fileInputRef} 
+        onChange={handleFileChange}
+        disabled={uploadState === "UPLOADING"}
+      />
       {/* Header */}
-      <div className="h-20 border-b border-gray-100 dark:border-gray-800 px-6 py-4 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-4">
+      {(activeDocumentId && activeDocument) && (
+        <div className="h-20 border-b border-gray-100 dark:border-gray-800 px-6 py-4 flex items-center justify-between shrink-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md z-10 relative">
+          <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-red-50 dark:bg-red-500/10 text-red-500 rounded-xl flex items-center justify-center shrink-0">
             <FileText className="w-6 h-6" />
           </div>
@@ -196,20 +193,38 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
             <span className="hidden sm:inline">Delete</span>
           </button>
         </div>
-      </div>
+        </div>
+      )}
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-8 pb-32">
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center mt-12 mb-8 max-w-2xl mx-auto">
-            <div className="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-4 flex flex-col">
+        {(!activeDocumentId || !activeDocument || messages.length === 0) ? (
+          <div className="flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto w-full py-8">
+            <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 rounded-2xl flex items-center justify-center mb-6 shadow-sm shrink-0">
               <Sparkles className="w-6 h-6" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-600 mb-2">Ask anything about your document</h2>
-            <p className="text-sm text-gray-500 text-center mb-8 max-w-md leading-relaxed">
-              I can help you understand, summarize, and find specific information in your PDF. All answers include source citations.
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">How can I help you today?</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-8 max-w-md leading-relaxed">
+              {!activeDocumentId 
+                ? "Upload a PDF document below to get started. I can help you understand, summarize, and find specific information."
+                : "Ask anything about your document. All answers include source citations."}
             </p>
             
-            <div className="flex flex-col sm:flex-row w-full gap-4">
+            {uploadState === "ERROR" && (
+              <div className="mb-6 w-full max-w-md p-4 bg-red-50/50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl flex items-start gap-3 shadow-sm relative overflow-hidden text-left">
+                <div className="p-2 bg-red-100 dark:bg-red-500/20 rounded-lg text-red-600 dark:text-red-400 shrink-0">
+                  <AlertCircle className="w-5 h-5" />
+                </div>
+                <div className="flex flex-col pr-6">
+                  <span className="font-semibold text-sm text-red-700 dark:text-red-400">Upload Failed</span>
+                  <span className="text-sm mt-1 text-red-600/90 dark:text-red-400/90 leading-relaxed">{getFriendlyErrorMessage(errorMessage)}</span>
+                </div>
+                <button onClick={() => setUploadState("IDLE")} className="absolute top-4 right-4 text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors p-1 rounded-md hover:bg-red-100 dark:hover:bg-red-500/20" aria-label="Dismiss error">
+                  <PlusIcon className="w-4 h-4 rotate-45" />
+                </button>
+              </div>
+            )}
+            
+            <div className="flex flex-col sm:flex-row w-full gap-4 max-w-xl">
               {[
                 "What are the main findings of this research?",
                 "Summarize this document",
@@ -217,20 +232,22 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
               ].map((q, i) => (
                 <button 
                   key={i}
+                  disabled={!activeDocumentId}
                   onClick={() => {
                     setInput(q);
                     setTimeout(() => handleSubmit(), 0);
                   }}
-                  className="flex-1 text-left p-4 rounded-xl border border-indigo-100 bg-white hover:bg-indigo-50/50 hover:border-indigo-200 transition-colors shadow-sm group flex flex-col justify-between h-24"
+                  className="flex-1 text-left p-4 rounded-xl border border-indigo-100 dark:border-indigo-500/20 bg-white dark:bg-zinc-900 hover:bg-indigo-50/50 dark:hover:bg-indigo-500/10 hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-colors shadow-sm group flex flex-col justify-between h-24 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span className="text-sm font-medium text-indigo-600 line-clamp-2">{q}</span>
-                  <span className="text-indigo-400 self-end opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                  <span className="text-sm font-medium text-indigo-600 dark:text-indigo-300 line-clamp-2">{q}</span>
+                  <span className="text-indigo-400 dark:text-indigo-500 self-end opacity-0 group-hover:opacity-100 transition-opacity">→</span>
                 </button>
               ))}
             </div>
           </div>
         ) : (
-          messages.map((m, index) => {
+          <div className="space-y-8 flex-1">
+            {messages.map((m, index) => {
             const contentText = extractText(m);
             const isAssistant = m.role === "assistant";
             
@@ -293,7 +310,8 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
                 )}
               </div>
             );
-          })
+          })}
+          </div>
         )}
         
          {isLoading && messages[messages.length - 1]?.role === 'user' && (
@@ -313,13 +331,20 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
         )}
         
         {error && (
-          <div className="text-center text-red-600 text-sm p-4 bg-red-50 rounded-xl border border-red-100 mx-auto max-w-md flex flex-col items-center justify-center gap-2 shadow-sm">
-            <span className="font-semibold">Generation Error</span> 
-            <span>{error.message || "An error occurred during generation."}</span>
+          <div className="mx-auto max-w-md w-full my-4 p-4 bg-red-50/50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl flex items-start gap-3 shadow-sm relative overflow-hidden text-left">
+            <div className="p-2 bg-red-100 dark:bg-red-500/20 rounded-lg text-red-600 dark:text-red-400 shrink-0">
+               <AlertCircle className="w-5 h-5" />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-semibold text-sm text-red-700 dark:text-red-400">Oops! Something went wrong</span>
+              <span className="text-sm mt-1 text-red-600/90 dark:text-red-400/90 leading-relaxed">
+                {getFriendlyErrorMessage(error.message || "An error occurred while generating the response.")}
+              </span>
+            </div>
           </div>
         )}
 
-        <div ref={messagesEndRef} className="h-4" />
+        <div ref={messagesEndRef} className={messages.length > 0 ? "h-32 shrink-0" : "shrink-0"} />
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white dark:from-zinc-950 dark:via-zinc-950 to-transparent pt-12">
@@ -340,9 +365,14 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
               }
             }}
           />
-          <div className="absolute bottom-2 left-3 flex items-center gap-2">
-            <button type="button" className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
+          <div className="absolute bottom-2 left-3 flex items-center gap-2 z-20">
+            <button 
+              type="button" 
+              onClick={() => fileInputRef.current?.click()}
+              className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors tooltip-trigger relative group"
+            >
               <Paperclip className="w-4 h-4" />
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Upload PDF</span>
             </button>
             <button type="button" className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
               <FileImage className="w-4 h-4" />
@@ -352,7 +382,7 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
              <span className="text-[10px] text-gray-400 hidden sm:inline-block">Press Enter to send, Shift + Enter for a new line</span>
             <button
               onClick={handleSubmit}
-              disabled={!input.trim() || isLoading || !isReady}
+              disabled={!input.trim() || isLoading || (!activeDocumentId && uploadState !== "SUCCESS")}
               className="p-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-indigo-300 disabled:cursor-not-allowed flex items-center justify-center shadow-sm"
               aria-label="Send message"
             >

@@ -1,13 +1,23 @@
 import React from "react";
-import { Search, Settings, ChevronDown } from "lucide-react";
+import { Search, Settings, ChevronDown, Menu } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 
-export function TopBar() {
+interface TopBarProps {
+  onMenuClick?: () => void;
+}
+
+export function TopBar({ onMenuClick }: TopBarProps) {
   return (
     <header className="h-14 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between px-4 bg-white dark:bg-zinc-950 shrink-0 transition-colors">
-      {/* Left side: Logo */}
-      <div className="flex items-center gap-3 w-64 shrink-0">
-        <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+      {/* Left side: Logo & Menu */}
+      <div className="flex items-center gap-3 w-auto md:w-64 shrink-0">
+        <button 
+          className="md:hidden p-1.5 -ml-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          onClick={onMenuClick}
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hidden sm:flex items-center justify-center shrink-0">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
           </svg>
@@ -19,8 +29,8 @@ export function TopBar() {
       </div>
 
       {/* Center: Search */}
-      <div className="flex-1 max-w-xl mx-auto flex justify-center">
-        <div className="relative w-full max-w-lg">
+      <div className="flex-1 max-w-xl mx-auto flex justify-center px-2">
+        <div className="relative w-full max-w-lg hidden sm:block">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
           <input 
             type="text" 
@@ -36,7 +46,7 @@ export function TopBar() {
       </div>
 
       {/* Right side: User/Settings */}
-      <div className="flex items-center gap-4 shrink-0 justify-end w-64">
+      <div className="flex items-center gap-2 sm:gap-4 shrink-0 justify-end w-auto sm:w-64">
         <ThemeToggle />
         <button className="text-gray-400 hover:text-gray-600 transition-colors">
           <Settings className="w-4 h-4" />
