@@ -5,9 +5,10 @@ import { Send, FileText, Bot, User, Trash2, MoreHorizontal, Copy, ThumbsUp, Thum
 import ReactMarkdown from "react-markdown";
 
 const extractText = (m: UIMessage): string => {
-  if (m.content) return m.content;
-  if (!m.parts) return "";
-  return m.parts.map((p: any) => p.type === 'text' ? p.text : '').join('');
+  const msg = m as any;
+  if (msg.content) return msg.content;
+  if (!msg.parts) return "";
+  return msg.parts.map((p: any) => p.type === 'text' ? p.text : '').join('');
 };
 
 const getFriendlyErrorMessage = (errStr: string): string => {
@@ -156,7 +157,6 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
         className="hidden" 
         ref={fileInputRef} 
         onChange={handleFileChange}
-        disabled={uploadState === "UPLOADING"}
       />
       {/* Header */}
       {(activeDocumentId && activeDocument) && (

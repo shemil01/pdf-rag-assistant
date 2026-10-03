@@ -18,7 +18,7 @@ export async function generateEmbeddings(texts: string[], batchSize: number = 10
     
     // We use the @ai-sdk/google provider directly
     const { embeddings: batchEmbeddings } = await embedMany({
-      model: google.textEmbeddingModel(EMBEDDING_MODEL, { outputDimensionality: EMBEDDING_DIMENSION }),
+      model: google.embedding(EMBEDDING_MODEL),
       values: batch,
     });
     
