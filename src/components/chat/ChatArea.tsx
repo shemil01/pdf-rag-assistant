@@ -86,10 +86,9 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
   };
   
   const transport = useMemo(() => {
-    if (!activeDocumentId) return undefined;
     return new TextStreamChatTransport({
       api: "/api/chat",
-      body: { documentId: activeDocumentId },
+      body: activeDocumentId ? { documentId: activeDocumentId } : {},
       fetch: async (url, init) => {
         const res = await fetch(url, init);
         const sourcesStr = res.headers.get("x-sources");
@@ -98,7 +97,9 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
             const sources = JSON.parse(sourcesStr);
             // We can't easily know the message ID here, so we store it against the document ID or a dummy key
             // Actually, we can just store the latest sources for the active document.
-            setCitationsMap(prev => ({ ...prev, [activeDocumentId]: sources }));
+            if (activeDocumentId) {
+              setCitationsMap(prev => ({ ...prev, [activeDocumentId]: sources }));
+            }
           } catch (e) {
             console.error("Failed to parse sources header", e);
           }
@@ -197,7 +198,7 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
       )}
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-4 flex flex-col">
-        {(!activeDocumentId || !activeDocument || messages.length === 0) ? (
+        {messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto w-full py-8">
             <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 rounded-2xl flex items-center justify-center mb-6 shadow-sm shrink-0">
               <Sparkles className="w-6 h-6" />
@@ -205,7 +206,7 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">How can I help you today?</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-8 max-w-md leading-relaxed">
               {!activeDocumentId 
-                ? "Upload a PDF document below to get started. I can help you understand, summarize, and find specific information."
+                ? "Upload a PDF document below to chat with it, or just ask me anything to get started."
                 : "Ask anything about your document. All answers include source citations."}
             </p>
             
@@ -232,7 +233,7 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
               ].map((q, i) => (
                 <button 
                   key={i}
-                  disabled={!activeDocumentId}
+                  disabled={!activeDocumentId && i !== 2} // Allow general chat for the 3rd option, or just remove disabled completely
                   onClick={() => {
                     setInput(q);
                     setTimeout(() => handleSubmit(), 0);
@@ -295,11 +296,11 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
                   )}
                 </div>
 
-                {isAssistant && citationsMap[activeDocumentId] && citationsMap[activeDocumentId].length > 0 && index === messages.length - 1 && (
+                {isAssistant && activeDocumentId && citationsMap[activeDocumentId] && citationsMap[activeDocumentId].length > 0 && index === messages.length - 1 && (
                   <div className="mt-4 flex items-center gap-3">
                     <span className="text-xs font-semibold text-gray-800 dark:text-gray-300">Sources</span>
                     <div className="flex gap-2">
-                      {citationsMap[activeDocumentId].map((page) => (
+                      {activeDocumentId && citationsMap[activeDocumentId] && citationsMap[activeDocumentId].map((page) => (
                         <div key={page} className="flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-md text-xs font-medium text-gray-600 dark:text-gray-300 shadow-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
                           <File className="w-3 h-3 text-gray-400 dark:text-gray-500" />
                           Page {page}
@@ -382,7 +383,7 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
              <span className="text-[10px] text-gray-400 hidden sm:inline-block">Press Enter to send, Shift + Enter for a new line</span>
             <button
               onClick={handleSubmit}
-              disabled={!input.trim() || isLoading || (!activeDocumentId && uploadState !== "SUCCESS")}
+              disabled={!input.trim() || isLoading}
               className="p-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-indigo-300 disabled:cursor-not-allowed flex items-center justify-center shadow-sm"
               aria-label="Send message"
             >

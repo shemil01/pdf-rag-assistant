@@ -6,11 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.130",
     "@ai-sdk/react": "^3.0.303",
+    "@google/generative-ai": "^0.24.1",
     "@nanostores/react": "github:ai/react",
     "@prisma/adapter-pg": "^7.10.0",
     "@types/pg": "^8.23.1",
