@@ -123,7 +123,7 @@ export function Sidebar({ activeDocumentId, onSelectDocument, documents, setDocu
       </div>
       
       {/* Footer Info Card */}
-      <div className="p-4 mt-auto">
+      <div className="p-4 mt-auto pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 overflow-hidden relative border border-gray-100 dark:border-zinc-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none">
           <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-indigo-50/80 dark:bg-indigo-900/20 rounded-full blur-2xl"></div>
           <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-4 relative z-10">

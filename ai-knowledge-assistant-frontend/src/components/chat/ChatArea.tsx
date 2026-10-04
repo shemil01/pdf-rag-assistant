@@ -343,8 +343,8 @@ console.log("tstings:",error)
         <div ref={messagesEndRef} className={messages.length > 0 ? "h-32 shrink-0" : "shrink-0"} />
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white dark:from-zinc-950 dark:via-zinc-950 to-transparent pt-12">
-        <div className="max-w-4xl mx-auto relative flex flex-col border-2 border-indigo-500 dark:border-indigo-500/80 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] bg-white dark:bg-zinc-900 overflow-hidden focus-within:ring-1 focus-within:ring-indigo-500 focus-within:border-indigo-600 transition-all">
+      <div className="absolute bottom-0 left-0 right-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-white via-white/95 dark:from-zinc-950 dark:via-zinc-950/95 to-transparent pt-12 backdrop-blur-sm z-20">
+        <div className="max-w-4xl mx-auto relative flex flex-col border border-gray-200 dark:border-zinc-800 hover:border-indigo-400 dark:hover:border-indigo-500/80 rounded-2xl shadow-lg bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/30 focus-within:border-indigo-500 transition-all">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}

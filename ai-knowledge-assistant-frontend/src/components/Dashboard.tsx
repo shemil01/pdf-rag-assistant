@@ -14,7 +14,7 @@ export default function Dashboard({ initialDocuments = [] }: { initialDocuments?
   const activeDoc = documents.find(d => d.id === activeDocumentId);
 
   return (
-    <div className="flex flex-col w-full h-screen bg-gray-50 overflow-hidden font-sans">
+    <div className="flex flex-col w-full h-[100dvh] bg-gray-50 dark:bg-zinc-950 overflow-hidden font-sans pl-safe pr-safe">
       <TopBar onMenuClick={() => setIsSidebarOpen(true)} />
       <div className="flex flex-1 overflow-hidden relative">
         {/* Mobile Sidebar Overlay */}
