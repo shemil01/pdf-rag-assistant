@@ -8,7 +8,7 @@ interface TopBarProps {
 
 export function TopBar({ onMenuClick }: TopBarProps) {
   return (
-    <header className="h-14 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between px-4 bg-white dark:bg-zinc-950 shrink-0 transition-colors">
+    <header className="h-[calc(3.5rem+env(safe-area-inset-top))] pt-safe border-b border-gray-100 dark:border-gray-800 flex items-center justify-between px-4 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl shrink-0 transition-colors z-30 relative shadow-sm">
       {/* Left side: Logo & Menu */}
       <div className="flex items-center gap-3 w-auto md:w-64 shrink-0">
         <button 

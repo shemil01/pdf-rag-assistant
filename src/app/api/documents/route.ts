@@ -8,7 +8,7 @@ import prisma from "@/lib/db/prisma";
 
 export async function POST(request: Request) {
   let documentId: string | null = null;
-  
+  console.log("now its working")
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
