@@ -354,7 +354,7 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask anything about this document..."
-            className="w-full px-4 pt-4 pb-12 bg-transparent focus:outline-none resize-none text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-600"
+            className="w-full px-4 pt-4 pb-12 bg-transparent focus:outline-none resize-none text-base text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-600"
             rows={2}
             disabled={isLoading || !isReady}
             onKeyDown={(e) => {
