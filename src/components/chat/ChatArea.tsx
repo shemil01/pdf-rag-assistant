@@ -3,7 +3,7 @@ import { useChat } from "@ai-sdk/react";
 import { TextStreamChatTransport, UIMessage } from "ai";
 import { Send, FileText, Bot, User, Trash2, MoreHorizontal, Copy, ThumbsUp, ThumbsDown, Sparkles, Paperclip, FileImage, File, PlusIcon, Loader2, AlertCircle } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-
+import { uploadDocumentAction } from "@/app/actions/documents.actions";
 const extractText = (m: UIMessage): string => {
   const msg = m as any;
   if (msg.content) return msg.content;
@@ -61,14 +61,9 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
     formData.append("file", file);
 
     try {
-      const response = await fetch("/api/documents", {
-        method: "POST",
-        body: formData,
-      });
+      const data = await uploadDocumentAction(formData);
 
-      const data = await response.json();
-
-      if (!response.ok) {
+      if (data.error) {
         throw new Error(data.error?.message || "Failed to process PDF.");
       }
 
@@ -87,7 +82,7 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
   
   const transport = useMemo(() => {
     return new TextStreamChatTransport({
-      api: "/api/chat",
+      api: "http://127.0.0.1:3001/api/chat",
       body: activeDocumentId ? { documentId: activeDocumentId } : {},
       fetch: async (url, init) => {
         const res = await fetch(url, init);
@@ -113,7 +108,7 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
     id: activeDocumentId || "chat",
     transport
   });
-
+console.log("tstings:",error)
   const isLoading = status === "streaming" || status === "submitted";
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
