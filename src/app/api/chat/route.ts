@@ -6,7 +6,7 @@ import { buildContext } from "@/lib/rag/context-builder";
 import { getRagSystemPrompt } from "@/lib/ai/prompts";
 import { GENERATION_MODEL } from "@/lib/ai/generation";
 import prisma from "@/lib/db/prisma";
-
+import { convertToModelMessages } from "ai";
 export async function POST(req: Request) {
   try {
     const { messages, documentId } = await req.json();
@@ -17,16 +17,26 @@ export async function POST(req: Request) {
 
     // General chat if no documentId is provided
     if (!documentId || typeof documentId !== "string") {
+      const modelMessages = await convertToModelMessages(messages);
+
       const result = streamText({
         model: google(GENERATION_MODEL),
-        system: "You are a helpful AI knowledge assistant. Answer the user's questions.",
-        messages: messages as any,
+        system: `
+You are a helpful personal AI assistant.
+
+Answer the user's questions clearly and naturally.
+You can answer general questions without requiring a document.
+Do not pretend that a document was provided when there is no document.
+    `,
+        messages: modelMessages,
+        temperature: 0.7,
       });
+
       return result.toTextStreamResponse();
     }
 
     const lastMessage = messages[messages.length - 1] as UIMessage;
-    
+
     const userTextPart = lastMessage?.parts?.find(p => p.type === 'text') as any;
     const query = userTextPart?.text || "";
 
@@ -60,20 +70,20 @@ export async function POST(req: Request) {
 
     // 6. Extract source metadata (Unique page numbers)
     const uniquePages = Array.from(new Set(retrievedChunks.map(c => c.pageNumber))).sort((a, b) => a - b);
-    
+
     const headers = new Headers();
     headers.set("x-sources", JSON.stringify(uniquePages));
 
     if (retrievedChunks.length === 0) {
-       const emptyStream = new ReadableStream({
-         start(controller) {
-           controller.enqueue(new TextEncoder().encode('0:"I cannot find the answer in the provided document."\n'));
-           controller.close();
-         }
-       });
-       return new Response(emptyStream, { 
-         headers: { "Content-Type": "text/plain; charset=utf-8", "x-sources": "[]" } 
-       });
+      const emptyStream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode('0:"I cannot find the answer in the provided document."\n'));
+          controller.close();
+        }
+      });
+      return new Response(emptyStream, {
+        headers: { "Content-Type": "text/plain; charset=utf-8", "x-sources": "[]" }
+      });
     }
 
     // 7. Generation and Streaming
@@ -85,11 +95,11 @@ export async function POST(req: Request) {
     });
 
     return result.toTextStreamResponse({ headers });
-    
+
   } catch (error: unknown) {
     console.error("Chat API Error:", error);
     return NextResponse.json(
-      { error: "We couldn't process your request. Please try again." }, 
+      { error: "We couldn't process your request. Please try again." },
       { status: 500 }
     );
   }
