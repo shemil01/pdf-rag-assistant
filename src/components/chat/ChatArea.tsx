@@ -318,10 +318,10 @@ console.log("tstings:",error)
                </div>
                <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">AI Assistant</span>
              </div>
-             <div className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed flex items-center gap-1 h-6">
-                <span className="w-1.5 h-1.5 bg-indigo-400 dark:bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                <span className="w-1.5 h-1.5 bg-indigo-400 dark:bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                <span className="w-1.5 h-1.5 bg-indigo-400 dark:bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+             <div className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed flex items-center gap-1.5 mt-2 pl-1">
+                <span className="w-2 h-2 bg-indigo-400 dark:bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                <span className="w-2 h-2 bg-indigo-400 dark:bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                <span className="w-2 h-2 bg-indigo-400 dark:bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
              </div>
            </div>
         )}
@@ -340,7 +340,7 @@ console.log("tstings:",error)
           </div>
         )}
 
-        <div ref={messagesEndRef} className={messages.length > 0 ? "h-32 shrink-0" : "shrink-0"} />
+        <div ref={messagesEndRef} className={messages.length > 0 ? "h-56 shrink-0" : "shrink-0"} />
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-white via-white/95 dark:from-zinc-950 dark:via-zinc-950/95 to-transparent pt-12 backdrop-blur-sm z-20">
