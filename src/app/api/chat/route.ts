@@ -5,6 +5,16 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
+    if (!body.documentId) {
+      return new Response(
+        "Please upload a PDF document first using the attachment button (📎) below. Once uploaded, I will analyze it and answer all your questions with page citations!",
+        {
+          status: 200,
+          headers: { "Content-Type": "text/plain; charset=utf-8" },
+        }
+      );
+    }
+
     const response = await fetch(`${BACKEND_URL}/api/chat`, {
       method: "POST",
       headers: {

@@ -199,11 +199,22 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
               <Sparkles className="w-6 h-6" />
             </div>
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">How can I help you today?</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-8 max-w-md leading-relaxed">
+            <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6 max-w-md leading-relaxed">
               {!activeDocumentId 
-                ? "Upload a PDF document below to chat with it, or just ask me anything to get started."
+                ? "Upload a PDF document below to start chatting with it. All answers will include source citations."
                 : "Ask anything about your document. All answers include source citations."}
             </p>
+
+            {!activeDocumentId && (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="mb-8 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm transition-all shadow-sm shadow-indigo-200 dark:shadow-none hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+              >
+                <Paperclip className="w-4 h-4" />
+                Upload PDF to Chat
+              </button>
+            )}
             
             {uploadState === "ERROR" && (
               <div className="mb-6 w-full max-w-md p-4 bg-red-50/50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl flex items-start gap-3 shadow-sm relative overflow-hidden text-left">
@@ -228,7 +239,7 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
               ].map((q, i) => (
                 <button 
                   key={i}
-                  disabled={!activeDocumentId && i !== 2} // Allow general chat for the 3rd option, or just remove disabled completely
+                  disabled={!activeDocumentId}
                   onClick={() => {
                     setInput(q);
                     setTimeout(() => handleSubmit(), 0);
