@@ -82,7 +82,7 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
   
   const transport = useMemo(() => {
     return new TextStreamChatTransport({
-      api: "http://127.0.0.1:3001/api/chat",
+      api: "/api/chat",
       body: activeDocumentId ? { documentId: activeDocumentId } : {},
       fetch: async (url, init) => {
         const res = await fetch(url, init);
@@ -108,7 +108,7 @@ export function ChatArea({ activeDocumentId, activeDocument, setDocuments, onSel
     id: activeDocumentId || "chat",
     transport
   });
-console.log("tstings:",error)
+
   const isLoading = status === "streaming" || status === "submitted";
   const messagesEndRef = useRef<HTMLDivElement>(null);
 

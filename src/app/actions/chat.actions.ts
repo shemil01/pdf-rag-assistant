@@ -1,6 +1,6 @@
 'use server';
 
-const BACKEND_URL = process.env.BACKEND_API_URL || 'http://127.0.0.1:3001';
+import { BACKEND_URL } from '@/lib/config';
 
 export async function chatAction(messages: any[], documentId: string | null) {
   try {
