@@ -1,83 +1,58 @@
-import { describe, it, expect, vi } from "vitest";
-import { POST } from "../app/api/chat/route";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { chatAction } from "../app/actions/chat.actions";
 
-import prisma from "../lib/db/prisma";
+describe("chatAction", () => {
+  const originalFetch = global.fetch;
 
-vi.mock("ai", () => ({
-  streamText: vi.fn(),
-  Message: vi.fn()
-}));
-
-vi.mock("../lib/db/prisma", () => ({
-  default: {
-    document: {
-      findUnique: vi.fn(),
-    },
-  }
-}));
-
-describe("Chat API Route", () => {
-  it("should return 400 if documentId is missing", async () => {
-    const req = new Request("http://localhost/api/chat", {
-      method: "POST",
-      body: JSON.stringify({ messages: [] })
-    });
-    const res = await POST(req);
-    expect(res.status).toBe(400);
-    const data = await res.json();
-    expect(data.error).toContain("Invalid or missing documentId");
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it("should return 400 if messages are missing or empty", async () => {
-    const req = new Request("http://localhost/api/chat", {
-      method: "POST",
-      body: JSON.stringify({ documentId: "123", messages: [] })
-    });
-    const res = await POST(req);
-    expect(res.status).toBe(400);
-    const data = await res.json();
-    expect(data.error).toContain("Messages array is required");
+  afterEach(() => {
+    global.fetch = originalFetch;
   });
 
-  it("should return 400 if last message is not from user", async () => {
-    const req = new Request("http://localhost/api/chat", {
-      method: "POST",
-      body: JSON.stringify({ 
-        documentId: "123", 
-        messages: [{ role: "assistant", content: "Hello" }] 
+  it("should send messages and documentId to the chat backend and return data", async () => {
+    const mockData = { reply: "Hello from assistant" };
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => mockData,
+    });
+
+    const messages = [{ role: "user", content: "Hello" }];
+    const documentId = "doc-123";
+
+    const result = await chatAction(messages, documentId);
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/chat"),
+      expect.objectContaining({
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ messages, documentId }),
       })
-    });
-    const res = await POST(req);
-    expect(res.status).toBe(400);
+    );
+    expect(result).toEqual(mockData);
   });
 
-  it("should return 404 if document does not exist", async () => {
-    vi.mocked(prisma.document.findUnique).mockResolvedValueOnce(null);
-    const req = new Request("http://localhost/api/chat", {
-      method: "POST",
-      body: JSON.stringify({ 
-        documentId: "123", 
-        messages: [{ role: "user", content: "Hello" }] 
-      })
+  it("should throw an error when backend response is not ok", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
     });
-    const res = await POST(req);
-    expect(res.status).toBe(404);
+
+    await expect(
+      chatAction([{ role: "user", content: "Hi" }], "doc-123")
+    ).rejects.toThrow("An unexpected error occurred during chat");
   });
 
-  it("should return 400 if document is not READY", async () => {
-    vi.mocked(prisma.document.findUnique).mockResolvedValueOnce({
-      id: "123", filename: "test", status: "PROCESSING", createdAt: new Date(), updatedAt: new Date()
-    });
-    const req = new Request("http://localhost/api/chat", {
-      method: "POST",
-      body: JSON.stringify({ 
-        documentId: "123", 
-        messages: [{ role: "user", content: "Hello" }] 
-      })
-    });
-    const res = await POST(req);
-    expect(res.status).toBe(400);
-    const data = await res.json();
-    expect(data.error).toContain("still being processed");
+  it("should throw an error when network request fails", async () => {
+    global.fetch = vi.fn().mockRejectedValue(new Error("Network connection error"));
+
+    await expect(
+      chatAction([{ role: "user", content: "Hi" }], "doc-123")
+    ).rejects.toThrow("An unexpected error occurred during chat");
   });
 });
